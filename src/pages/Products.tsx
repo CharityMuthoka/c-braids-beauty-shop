@@ -103,6 +103,8 @@ const Products = () => {
                     price={Number(product.price)}
                     image_url={product.image_url}
                     category={product.category}
+                    stock={Number(product.stock)}
+
                   />
                 ))}
               </div>
