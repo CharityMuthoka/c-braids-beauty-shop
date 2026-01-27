@@ -89,8 +89,12 @@ const Checkout = () => {
         Math.round(totalPrice()), 
         data.id
       );
+
   
       toast.success("Check your phone to complete payment");
+
+      clearCart();
+
   
       // 3. Navigate to waiting / success page
       navigate("/order-success");
