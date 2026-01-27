@@ -90,7 +90,7 @@ const isOutOfStock = safeStock <= 0;
         </h3>
         <div className="flex items-center justify-between">
           <p className="text-primary font-semibold">
-            ${price.toFixed(2)}
+            KSH{price.toFixed(2)}
           </p>
           <Button
   onClick={handleAddToCart}

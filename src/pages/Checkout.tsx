@@ -29,44 +29,81 @@ const Checkout = () => {
     }));
   };
 
+
+
+
+  const initiateMpesaPayment = async (phone: string, amount:number, orderId:string) =>{
+    const response = await fetch(
+      "https://cbraids-mpesa-backend.onrender.com/api/mpesa/stkpush",
+      {
+        method: "POST",
+        headers:{
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone,
+          amount,
+          orderId,
+
+        }),
+
+      }
+    );
+    if (!response.ok){
+      throw new Error("Failed to initiate M-Pesa payment");
+    }
+    return response.json();
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
-
+  
     setIsLoading(true);
-
+  
     try {
-      const { error } = await supabase.from("orders").insert([{
-        customer_name: formData.name,
-        customer_email: formData.email,
-        customer_phone: formData.phone,
-        customer_address: formData.address,
-        items: items as unknown as import("@/integrations/supabase/types").Json,
-        total: totalPrice(),
-        status: "pending",
-      }]);
-
+      // 1. Save order as PENDING
+      const { data, error } = await supabase
+        .from("orders")
+        .insert([{
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          customer_address: formData.address,
+          items: items as unknown as import("@/integrations/supabase/types").Json,
+          total: totalPrice(),
+          status: "pending",
+        }])
+        .select()
+        .single();
+  
       if (error) throw error;
-
-      clearCart();
-      toast.success("Order placed successfully!");
+  
+      // 2. Trigger M-Pesa STK Push
+      await initiateMpesaPayment(
+        formData.phone,
+        Math.round(totalPrice()), 
+        data.id
+      );
+  
+      toast.success("Check your phone to complete payment");
+  
+      // 3. Navigate to waiting / success page
       navigate("/order-success");
+  
+      // DO NOT clear cart yet
     } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error("Failed to place order. Please try again.");
+      console.error(error);
+      toast.error("Payment initiation failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (items.length === 0) {
-    navigate("/cart");
-    return null;
-  }
+  
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -149,7 +186,7 @@ const Checkout = () => {
                   ) : (
                     <>
                       <CheckCircle className="h-5 w-5 mr-2" />
-                      Place Order - ${totalPrice().toFixed(2)}
+                      Place Order - KSH{totalPrice().toFixed(2)}
                     </>
                   )}
                 </Button>
@@ -181,7 +218,7 @@ const Checkout = () => {
                       </p>
                     </div>
                     <p className="font-medium text-foreground">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      KSH{(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -190,7 +227,7 @@ const Checkout = () => {
               <div className="border-t border-border pt-4 space-y-2">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Subtotal</span>
-                  <span>${totalPrice().toFixed(2)}</span>
+                  <span>KSH{totalPrice().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
@@ -198,7 +235,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex justify-between text-lg font-semibold text-foreground pt-2 border-t border-border">
                   <span>Total</span>
-                  <span>${totalPrice().toFixed(2)}</span>
+                  <span>KSH{totalPrice().toFixed(2)}</span>
                 </div>
               </div>
             </div>

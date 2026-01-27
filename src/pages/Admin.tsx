@@ -22,6 +22,31 @@ const Admin = () => {
 
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    if (!isAdmin) return;
+  
+    const channel = supabase
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          console.log("Order updated:", payload);
+          queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, queryClient]);
+  
+
   // Product form state
   const [productForm, setProductForm] = useState({
     name: "", price: "", category: "perfume", image_url: "", description: "", stock: "0", featured: false
@@ -208,7 +233,7 @@ const Admin = () => {
                       <div><p className="font-semibold">{order.customer_name}</p><p className="text-sm text-muted-foreground">{order.customer_email}</p></div>
                       <Badge variant={order.status === "completed" ? "default" : "secondary"}>{order.status}</Badge>
                     </div>
-                    <p className="text-sm mb-2">Total: <strong>${Number(order.total).toFixed(2)}</strong></p>
+                    <p className="text-sm mb-2">Total: <strong>KSH{Number(order.total).toFixed(2)}</strong></p>
                     <div className="flex gap-2">
                       {["pending", "processing", "completed"].map((s) => (
                         <Button key={s} size="sm" variant={order.status === s ? "default" : "outline"} onClick={() => updateOrderStatus.mutate({ id: order.id, status: s })}>{s}</Button>
@@ -261,7 +286,7 @@ const Admin = () => {
       >
         <CardContent className="pt-4">
           <p className="font-semibold">{p.name}</p>
-          <p className="text-primary">${Number(p.price).toFixed(2)}</p>
+          <p className="text-primary">KSH{Number(p.price).toFixed(2)}</p>
 
           <div className="flex gap-2 mt-2">
             <Badge variant="outline">{p.category}</Badge>
