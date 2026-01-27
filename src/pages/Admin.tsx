@@ -67,6 +67,38 @@ const Admin = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+  
+    const channel = supabase
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+        },
+        (payload) => {
+          console.log("🔄 Order updated:", payload);
+  
+          // refresh orders immediately
+          queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+  
+          // optional toast
+          if (payload.new.status === "processing") {
+            toast.success("💰 Payment received");
+          }
+        }
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+  
+
   const checkAdminRole = async () => {
     const { data, error } = await supabase
       .from("user_roles")
