@@ -26,6 +26,12 @@ export type Database = {
           status: string
           total: number
           updated_at: string
+
+          paid_at: string | null;
+          mpesa_receipt: string | null;
+          mpesa_amount: number | null;
+          mpesa_phone: string | null;
+
         }
         Insert: {
           created_at?: string

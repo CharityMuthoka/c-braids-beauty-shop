@@ -266,14 +266,42 @@ const Admin = () => {
                       <Badge variant={order.status === "completed" ? "default" : "secondary"}>{order.status}</Badge>
                     </div>
                     <p className="text-sm mb-2">Total: <strong>KSH{Number(order.total).toFixed(2)}</strong></p>
+                    
+                    {order.mpesa_receipt && (
+  <div className="mt-3 rounded-md bg-muted p-3 text-sm space-y-1">
+    <p>
+      <strong>M-Pesa Receipt:</strong>{" "}
+      <span className="font-mono">{order.mpesa_receipt}</span>
+    </p>
+    <p>
+      <strong>Paid Phone:</strong> {order.mpesa_phone}
+    </p>
+    <p>
+      <strong>Paid Amount:</strong>{" "}
+      KSH{Number(order.mpesa_amount).toFixed(2)}
+    </p>
+    {order.paid_at && (
+      <p>
+        <strong>Paid At:</strong>{" "}
+        {new Date(order.paid_at).toLocaleString()}
+      </p>
+    )}
+  </div>
+)}
+
+
                     <div className="flex gap-2">
                       {["pending", "processing", "completed"].map((s) => (
                         <Button key={s} size="sm" variant={order.status === s ? "default" : "outline"} onClick={() => updateOrderStatus.mutate({ id: order.id, status: s })}>{s}</Button>
                       ))}
+
+                      
                     </div>
                   </CardContent>
                 </Card>
               ))}
+
+              
               {!orders?.length && <p className="text-center text-muted-foreground py-8">No orders yet</p>}
             </div>
           </TabsContent>
