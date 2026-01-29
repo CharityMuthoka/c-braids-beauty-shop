@@ -11,7 +11,13 @@ import OrderSuccess from "./pages/OrderSuccess";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+
+import Account from "@/pages/Account";
+
+
 
 const queryClient = new QueryClient();
 
@@ -30,6 +36,12 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Admin />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/account" element={<Account />} />
+
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

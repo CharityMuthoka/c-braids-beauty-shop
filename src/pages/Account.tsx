@@ -8,14 +8,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 
 
-
-
-
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const totalItems = useCart((state) => state.totalItems());
-
-
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -24,49 +19,23 @@ const Header = () => {
     { href: "/contact", label: "Contact" },
   ];
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    setUser(data.user);
+  });
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    setUser(session?.user ?? null);
+  });
+
+  return () => subscription.unsubscribe();
+}, []);
 
 
-
-
-  const [authUser, setAuthUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  
-  useEffect(() => {
-    const loadUser = async () => {
-      const { data } = await supabase.auth.getUser();
-  
-      if (!data.user) {
-        setAuthUser(null);
-        setProfile(null);
-        return;
-      }
-  
-      setAuthUser(data.user);
-  
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("first_name, role")
-        .eq("user_id", data.user.id)
-        .single();
-  
-      setProfile(profileData);
-    };
-  
-    loadUser();
-  
-    const { data: subscription } =
-      supabase.auth.onAuthStateChange((_event, session) => {
-        loadUser();
-      });
-  
-    return () => subscription.subscription.unsubscribe();
-  }, []);
-  
-
-
-const clearCart = useCart((state) => state.clearCart);
-const navigate = useNavigate();
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
@@ -93,70 +62,53 @@ const navigate = useNavigate();
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-
-
-
-
-
-
-{authUser && (
-  <div className="hidden lg:flex items-center gap-2">
-    <User className="h-4 w-4 text-muted-foreground" />
-    <span className="text-sm font-medium text-foreground">
-      {profile?.role === "admin"
-        ? "Admin"
-        : profile?.first_name ?? "Account"}
-    </span>
-  </div>
-)}
-
-
-
-
-
+            <Link to="/admin" className="hidden lg:block">
+              <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-primary">
+                <User className="h-5 w-5" />
+              </Button>
+            </Link>
 
             <div className="flex items-center gap-3">
-            {!authUser ? (
-  <>
-    <Link to="/login">
-      <Button variant="ghost" size="sm">Login</Button>
-    </Link>
-    <Link to="/signup">
-      <Button size="sm" className="bg-gradient-rose">Sign up</Button>
-    </Link>
-  </>
-) : (
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={async () => {
-      await supabase.auth.signOut();
-      clearCart();
-      navigate("/");
-    }}
-  >
-    Logout
-  </Button>
-)}
+  {!user ? (
+    <>
+      <Link to="/login">
+        <Button variant="ghost" size="sm">
+          Login
+        </Button>
+      </Link>
+
+      <Link to="/signup">
+        <Button size="sm" className="bg-gradient-rose hover:opacity-90">
+          Sign up
+        </Button>
+      </Link>
+    </>
+  ) : (
+    <>
+      
+
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={async () => {
+          await supabase.auth.signOut();
+        }}
+      >
+        Logout
+      </Button>
+    </>
+  )}
 </div>
 
 
             <Link to="/cart" className="relative">
               <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-primary">
                 <ShoppingBag className="h-5 w-5" />
-
-                
-               
-
-                {authUser && totalItems > 0 && (
-  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full 
-                   bg-gradient-rose text-primary-foreground text-xs 
-                   flex items-center justify-center font-medium">
-    {totalItems}
-  </span>
-)}
-
-
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-rose text-primary-foreground text-xs flex items-center justify-center font-medium">
+                    {totalItems}
+                  </span>
+                )}
               </Button>
             </Link>
 
@@ -179,18 +131,13 @@ const navigate = useNavigate();
                       {link.label}
                     </Link>
                   ))}
-                  
-
-                  {isAdmin && (
-  <Link
-    to="/admin"
-    onClick={() => setMobileMenuOpen(false)}
-    className="text-lg font-medium text-foreground/80 hover:text-primary transition-colors py-2"
-  >
-    Admin Dashboard
-  </Link>
-)}
-
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-lg font-medium text-foreground/80 hover:text-primary transition-colors py-2"
+                  >
+                    Admin
+                  </Link>
                 </nav>
               </SheetContent>
             </Sheet>

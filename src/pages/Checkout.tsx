@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState , useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -11,16 +11,47 @@ import { useCart } from "@/lib/cart";
 import { toast } from "sonner";
 import { Loader2, CheckCircle } from "lucide-react";
 
+
+
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, totalPrice, clearCart } = useCart();
+
+  const [user, setUser] = useState<any>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     address: "",
   });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (!data.user) {
+        navigate("/login?redirect=/checkout");
+        return;
+      }
+
+      setUser(data.user);
+
+      // Optional: prefill email
+      setFormData((prev) => ({
+        ...prev,
+        email: data.user.email ?? "",
+      }));
+
+      setCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [navigate]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({
@@ -108,6 +139,15 @@ const Checkout = () => {
     }
   };
   
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+  
+
 
   return (
     <div className="min-h-screen flex flex-col">
