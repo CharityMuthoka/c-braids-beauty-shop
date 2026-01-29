@@ -98,6 +98,33 @@ export type Database = {
         }
         Relationships: []
       }
+
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          slug?: string
+          description?: string | null
+          is_active?: boolean
+        }
+        Relationships: []
+      }
+      
       profiles: {
         Row: {
           created_at: string

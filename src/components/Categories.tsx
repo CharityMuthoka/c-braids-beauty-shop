@@ -10,10 +10,10 @@ const categories = [
     gradient: "from-rose to-primary",
   },
   {
-    name: "Skincare",
-    slug: "skincare",
+    name: "Shoes",
+    slug: "shoes",
     icon: Sparkles,
-    description: "Nourish and protect your skin",
+    description: "High quality shoes",
     gradient: "from-gold to-gold-light",
   },
   {

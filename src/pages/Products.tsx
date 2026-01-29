@@ -11,10 +11,12 @@ import { Filter } from "lucide-react";
 const categories = [
   { value: "all", label: "All Products" },
   { value: "perfume", label: "Perfumes" },
-  { value: "skincare", label: "Skincare" },
+  { value: "shoes", label: "Shoes" },
   { value: "haircare", label: "Hair Care" },
   { value: "makeup", label: "Makeup" },
 ];
+
+
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();

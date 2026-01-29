@@ -19,7 +19,19 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
-
+  const { data: categories } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: isAdmin === true,
+  });
+  
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -46,10 +58,18 @@ const Admin = () => {
     };
   }, [isAdmin, queryClient]);
   
-
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    is_active: true,
+  });
+  
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  
   // Product form state
   const [productForm, setProductForm] = useState({
-    name: "", price: "", category: "perfume", image_url: "", description: "", stock: "0", featured: false
+    name: "", price: "", category: "", image_url: "", description: "", stock: "0", featured: false
   });
 
   useEffect(() => {
@@ -193,6 +213,42 @@ const Admin = () => {
   });
   
 
+  const saveCategory = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        name: categoryForm.name,
+        slug: categoryForm.slug,
+        description: categoryForm.description || null,
+        is_active: categoryForm.is_active,
+      };
+  
+      if (editingCategoryId) {
+        const { error } = await supabase
+          .from("categories")
+          .update(payload)
+          .eq("id", editingCategoryId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("categories")
+          .insert([payload]);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(editingCategoryId ? "Category updated" : "Category added");
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      setEditingCategoryId(null);
+      setCategoryForm({
+        name: "",
+        slug: "",
+        description: "",
+        is_active: true,
+      });
+    },
+  });
+  
+
   const updateOrderStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("orders").update({ status }).eq("id", id);
@@ -255,7 +311,9 @@ const Admin = () => {
       </header>
       <main className="container mx-auto p-4">
         <Tabs defaultValue="orders">
-          <TabsList className="mb-4"><TabsTrigger value="orders"><ShoppingCart className="h-4 w-4 mr-2" />Orders</TabsTrigger><TabsTrigger value="products"><Package className="h-4 w-4 mr-2" />Products</TabsTrigger></TabsList>
+          <TabsList className="mb-4"><TabsTrigger value="orders"><ShoppingCart className="h-4 w-4 mr-2" />Orders</TabsTrigger><TabsTrigger value="products"><Package className="h-4 w-4 mr-2" />Products</TabsTrigger> <TabsTrigger value="categories">
+    <Package className="h-4 w-4 mr-2" />Categories
+  </TabsTrigger></TabsList>
           <TabsContent value="orders">
             <div className="space-y-4">
               {orders?.map((order) => (
@@ -305,6 +363,88 @@ const Admin = () => {
               {!orders?.length && <p className="text-center text-muted-foreground py-8">No orders yet</p>}
             </div>
           </TabsContent>
+
+          <TabsContent value="categories">
+  <Card className="mb-6">
+    <CardHeader>
+      <CardTitle>Add / Edit Category</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          saveCategory.mutate();
+        }}
+        className="grid gap-4"
+      >
+        <div>
+          <Label>Name</Label>
+          <Input
+            value={categoryForm.name}
+            onChange={(e) =>
+              setCategoryForm((p) => ({ ...p, name: e.target.value }))
+            }
+            required
+          />
+        </div>
+
+        <div>
+          <Label>Slug</Label>
+          <Input
+            value={categoryForm.slug}
+            onChange={(e) =>
+              setCategoryForm((p) => ({ ...p, slug: e.target.value }))
+            }
+            required
+          />
+        </div>
+
+        <div>
+          <Label>Description</Label>
+          <Input
+            value={categoryForm.description}
+            onChange={(e) =>
+              setCategoryForm((p) => ({ ...p, description: e.target.value }))
+            }
+          />
+        </div>
+
+        <Button type="submit">
+          {editingCategoryId ? "Update Category" : "Add Category"}
+        </Button>
+      </form>
+    </CardContent>
+  </Card>
+
+  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {categories?.map((c) => (
+      <Card
+        key={c.id}
+        className="cursor-pointer hover:shadow-md"
+        onClick={() => {
+          setEditingCategoryId(c.id);
+          setCategoryForm({
+            name: c.name,
+            slug: c.slug,
+            description: c.description || "",
+            is_active: c.is_active,
+          });
+        }}
+      >
+        <CardContent className="pt-4">
+          <p className="font-semibold">{c.name}</p>
+          <p className="text-sm text-muted-foreground">{c.slug}</p>
+          {!c.is_active && (
+            <Badge variant="destructive" className="mt-2">
+              Disabled
+            </Badge>
+          )}
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+</TabsContent>
+
           <TabsContent value="products">
             <Card className="mb-6">
               <CardHeader><CardTitle className="text-lg">Add Product</CardTitle></CardHeader>
@@ -312,7 +452,28 @@ const Admin = () => {
                 <form onSubmit={(e) => { e.preventDefault(); saveProduct.mutate(); }} className="grid md:grid-cols-2 gap-4">
                   <div><Label>Name</Label><Input value={productForm.name} onChange={(e) => setProductForm(p => ({ ...p, name: e.target.value }))} required /></div>
                   <div><Label>Price</Label><Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm(p => ({ ...p, price: e.target.value }))} required /></div>
-                  <div><Label>Category</Label><select className="w-full h-10 border rounded-md px-3" value={productForm.category} onChange={(e) => setProductForm(p => ({ ...p, category: e.target.value }))}><option value="perfume">Perfume</option><option value="skincare">Skincare</option><option value="haircare">Haircare</option><option value="makeup">Makeup</option></select></div>
+                  <div>
+  <Label>Category</Label>
+  <select
+    className="w-full h-10 border rounded-md px-3"
+    value={productForm.category}
+    onChange={(e) =>
+      setProductForm((p) => ({ ...p, category: e.target.value }))
+    }
+    required
+  >
+    <option value="">Select category</option>
+
+    {categories
+      ?.filter((c) => c.is_active)
+      .map((c) => (
+        <option key={c.id} value={c.slug}>
+          {c.name}
+        </option>
+      ))}
+  </select>
+</div>
+
                   <div><Label>Stock</Label><Input type="number" value={productForm.stock} onChange={(e) => setProductForm(p => ({ ...p, stock: e.target.value }))} /></div>
                   <div className="md:col-span-2"><Label>Image URL</Label><Input value={productForm.image_url} onChange={(e) => setProductForm(p => ({ ...p, image_url: e.target.value }))} /></div>
                   <div className="md:col-span-2 flex items-center gap-2"><input type="checkbox" checked={productForm.featured} onChange={(e) => setProductForm(p => ({ ...p, featured: e.target.checked }))} /><Label>Featured</Label></div>

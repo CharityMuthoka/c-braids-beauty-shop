@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import shoes from '../../public/adidas 3.jpeg'
 
 const HeroSection = () => {
   return (
@@ -24,12 +25,12 @@ const HeroSection = () => {
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-serif font-bold leading-tight">
               <span className="text-foreground">Discover Your</span>
               <br />
-              <span className="text-gradient-rose">Perfect Scent</span>
+              <span className="text-gradient-rose">Signature Style</span>
             </h1>
 
             <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-              Experience luxury at affordable prices. Our premium refill perfumes 
-              and beauty essentials help you look and feel extraordinary every day.
+            Curated beauty and lifestyle essentials designed to elevate your look, 
+            confidence, and everyday experience, all in one place.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -49,12 +50,12 @@ const HeroSection = () => {
             {/* Stats */}
             <div className="flex items-center gap-8 justify-center lg:justify-start pt-4">
               <div>
-                <p className="text-2xl font-serif font-bold text-foreground">500+</p>
+                <p className="text-2xl font-serif font-bold text-foreground">200+</p>
                 <p className="text-sm text-muted-foreground">Products</p>
               </div>
               <div className="h-12 w-px bg-border" />
               <div>
-                <p className="text-2xl font-serif font-bold text-foreground">2K+</p>
+                <p className="text-2xl font-serif font-bold text-foreground">1K+</p>
                 <p className="text-sm text-muted-foreground">Happy Clients</p>
               </div>
               <div className="h-12 w-px bg-border" />
@@ -72,7 +73,7 @@ const HeroSection = () => {
               <div className="relative bg-gradient-to-br from-rose-light to-cream rounded-3xl p-8 shadow-glow">
                 <div className="aspect-square rounded-2xl bg-muted flex items-center justify-center overflow-hidden">
                   <div className="text-center p-8">
-                    <Sparkles className="h-16 w-16 mx-auto text-primary mb-4" />
+                    <img src={shoes} className="h-auto max-w-full object-contain text-primary mb-4" />
                     <p className="text-lg font-serif text-muted-foreground">
                       Premium Beauty Collection
                     </p>
